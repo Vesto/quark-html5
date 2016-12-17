@@ -1,0 +1,1 @@
+`quark-html5` is responsible for creating the `HTML5` wrapper needed to run Quark in it. This is meant to be a very bare-bones implementation where all functionality is mandatory. 
