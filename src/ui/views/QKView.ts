@@ -1,94 +1,132 @@
-import { View, Rect, Color, Shadow } from "quark";
+import { View, ViewBacking, Rect, Color, Shadow } from "quark";
+
+/* CSS Value extensions */
+// TODO: Do the same for `Color`, figure out why these extensions aren't working
+export interface CSSConvertible {
+    toCSSValue(): string;
+}
+
+declare global {
+    interface Number extends CSSConvertible {
+
+    }
+}
+
+Number.prototype.toCSSValue = function() {
+    return `${this.toString()}px`;
+};
 
 /* Element extension */
 declare global {
-    interface Element {
-        view?: View;
-        getOrCreateView(): View;
+    interface Element extends ViewBacking {
+
     }
 }
-
-Element.prototype.getOrCreateView = () => {
-    if (this.view) {
-        // Return existing view
-        return this.view;
-    } else {
-        // Create a new view and save the backing
-        this.view = new View();
-        this.view.element = this;
-
-        // Return the view
-        return this.view;
-    }
-};
 
 /* View extensions */
-declare module "quark" {
-    interface View {
-        _element?: HTMLElement;
-        element?: HTMLElement;
-    }
+export function alterElement() {
+    Object.defineProperties(Element.prototype, {
+        qk_getOrCreateView: {
+            value: function () {
+                if (this.qk_view) {
+                    // Return existing view
+                    return this.qk_view;
+                } else {
+                    // Create and return the new view
+                    this.qk_view = new View(this);
+                    return this.qk_view;
+                }
+            }
+        },
 
-    interface ViewConstructor {
-        new(): View;
-    }
+        qk_init: {
+            value: function() {
+                this.style.position = "absolute";
+                this.style["user-select"] = "none"; // Prevent text selection
+            }
+        },
 
-    let View: ViewConstructor;
+        qk_rect: {
+            get: function () { // TODO: rect when not child (see how prototype.js did it)
+                let clientRect = this.getBoundingClientRect();
+                return new Rect(
+                    clientRect.left, clientRect.top,
+                    clientRect.width, clientRect.height
+                );
+            },
+            set: function (rect: Rect) {
+                this.style.left = rect.x.toCSSValue();
+                this.style.top = rect.y.toCSSValue();
+                this.style.width = rect.width.toCSSValue();
+                this.style.height = rect.height.toCSSValue();
+            }
+        },
 
+        qk_subviews: {
+            value: function () {
+                return Array.prototype.slice.call(this.children)
+                    .map((child: HTMLElement) => {
+                        return child.qk_getOrCreateView()
+                    });
+            }
+        },
+        qk_superview: {
+            value: function () { // TODO: What if no parent?
+                return this.parentElement.getOrCreateView();
+            }
+        },
+        qk_addSubview: {
+            value: function (view: View, index: number) { // TODO: Subviews
+                this.appendChild(view.backing as Element)
+            }
+        },
+        qk_removeFromSuperview: {
+            value: function () {
+                this.parentElement.removeChild(this.element);
+            }
+        },
+
+        qk_isHidden: {
+            get: function () {
+                return this.hidden;
+            },
+            set: function (hidden: boolean) {
+                this.hidden = hidden;
+            }
+        },
+        qk_backgroundColor: {
+            get: function () { // TODO: Background
+                return new Color(0, 0, 0, 0);
+            },
+            set: function (color: Color) {
+                this.style.backgroundColor = `rgba(${color.red * 255},${color.green * 255},${color.blue * 255},${color.alpha * 255})`;
+            }
+        },
+        qk_alpha: {
+            get: function () { // TODO: Alpha
+                return 0;
+            },
+            set: function () {
+
+            }
+        },
+        qk_shadow: {
+            get: function () { // TODO: Shadow
+                return undefined;
+            },
+            set: function (shadow: Shadow | undefined) {
+
+            }
+        },
+        qk_cornerRadius: {
+            get: function () { // TODO: Corner radius
+                return 0;
+            },
+            set: function (value: number) {
+
+            }
+        }
+    });
+
+    View.backingInit = () => document.createElement("div");
 }
-
-View.prototype.element = {
-    get: function() {
-        // Return the element
-        return this._element as HTMLElement;
-    },
-    set: function(element: HTMLElement) {
-        // Save the element
-        this._element = element;
-
-        // Configure the element
-        element.style.position = "absolute";
-    }
-};
-
-View.prototype.qk_init = function(createView: boolean) {
-    if (createView)
-        this.element = new HTMLElement();
-};
-
-View.prototype.qk_rect = function() { // TODO: Rect
-    return new Rect(0, 0, 0, 0);
-};
-View.prototype.qk_setRect = function(rect: Rect) {
-
-};
-
-View.prototype.qk_subviews = function(): View[] {
-    Array.prototype.slice.call(this.element.children)
-        .map((child: HTMLElement) => { return child.getOrCreateView() });
-};
-View.prototype.qk_superview = function() { // TODO: What if no parent?
-    return this.element.parentElement.getOrCreateView();
-};
-View.prototype.qk_addSubview = function(view: View, index: number) {
-    // TODO: Subview
-};
-View.prototype.qk_removeFromSuperview = function() {
-    this.element.parentElement.removeChild(this.element);
-};
-
-View.prototype.qk_isHidden = function() {
-    return this.element.hidden;
-};
-View.prototype.qk_setHidden = function(hidden: boolean) {
-    this.element.hidden = hidden;
-};
-
-View.prototype.qk_backgroundColor = function() { return new Color(0, 0, 0, 0); }; // TODO: BG color
-View.prototype.qk_setBackgroundColor = function(color: Color) { };
-View.prototype.qk_alpha = function() { return 0; }; // TODO: Alpha
-View.prototype.qk_setAlpha = function(opacity: number) { };
-View.prototype.qk_shadow = function() { return undefined; }; // TODO: Shadow
-View.prototype.qk_setShadow = function(shadow: Shadow | undefined) { };
-View.prototype.qk_cornerRadius = function() { return 0; }; // TODO: Corner radius
-View.prototype.qk_setCornerRadius = function(radius: number) { };

@@ -1,1 +1,5 @@
-export * from "./ui/views/QKView";
+import { alterElement } from "./ui/views/QKView";
+
+export function alterPrototypes() {
+    alterElement();
+}
