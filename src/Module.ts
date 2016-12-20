@@ -1,5 +1,5 @@
 import fs = require("fs");
-import URI = uri.URI;
+import * as URI from "urijs";
 
 export class ModuleInfo {
     // The keys used in the info.js file
@@ -50,9 +50,10 @@ export class ModuleResource {
 export class Module {
     private static infoRelativePath = "info.json";
 
-    get infoURL(): URI { return this.baseUrl.absoluteTo(Module.infoRelativePath); }
-    get buildURL(): URI { return this.baseUrl.absoluteTo(this.info.build); }
-    get resourcesURL(): URI { return this.baseUrl.absoluteTo(this.info.resources); }
+    // get infoURL(): URI { return this.baseUrl.absoluteTo(Module.infoRelativePath); }
+    get infoURL(): URI { return this.baseUrl.clone().segment(Module.infoRelativePath); }
+    get buildURL(): URI { return this.baseUrl.clone().segment(this.info.build); }
+    get resourcesURL(): URI { return this.baseUrl.clone().segment(this.info.resources); }
 
     public readonly baseUrl: URI;
     public readonly info: ModuleInfo;
@@ -60,7 +61,7 @@ export class Module {
     public readonly resources: ModuleResource[];
 
     public constructor(public readonly url: URI) {
-        this.baseUrl = url.normalize();
+        this.baseUrl = url.segment("/").normalize();
         this.info = this.loadInfo();
         this.source = this.loadSource();
         this.resources = this.indexResources();
@@ -83,10 +84,10 @@ export class Module {
         let resources: ModuleResource[] = [];
         let files = fs.readdirSync(url.readable());
         for (let file of files) {
-            let absoluteURL = new URI(file).absoluteTo(url); // Get the path to the file
+            let absoluteURL = url.clone().segment(file); // Get the path to the file
             let stats = fs.statSync(absoluteURL.readable()); // Get statistics on the file
             if (stats.isDirectory()) { // If directory, recursively get resources
-                absoluteURL = absoluteURL.path(absoluteURL.path(true) + "/"); // Convert file to a path
+                absoluteURL.segment("/"); // Convert file to a path
                 resources.push(...this.indexResources(absoluteURL));
             } else { // Add this resource
                 resources.push(new ModuleResource(absoluteURL)); // Push a new resource item
