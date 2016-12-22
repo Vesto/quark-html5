@@ -1,6 +1,9 @@
 import "./ui/views/QKView";
+import "./core/QKLogger";
 
-// TODO: Export URI.js
 export import URI = require("urijs");
-export * from "./Instance";
-export * from "./Module";
+export * from "./QKInstance";
+export * from "./QKModule";
+export * from "./core/QKLogger";
+export * from "./ui/views/QKView";
+export * from "./ui/QKWindow";

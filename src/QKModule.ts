@@ -1,7 +1,8 @@
 import fs = require("fs");
-import * as URI from "urijs";
+import URI = uri.URI;
+// import * as URI from "urijs";
 
-export class ModuleInfo {
+export class QKModuleInfo {
     // The keys used in the info.js file
     private static nameKey: string = "name";
     private static versionKey: string = "version";
@@ -27,18 +28,18 @@ export class ModuleInfo {
         let info = JSON.parse(contents);
 
         // Return the module
-        return new ModuleInfo(
-            info[ModuleInfo.nameKey],
-            info[ModuleInfo.versionKey],
-            info[ModuleInfo.moduleKey],
-            info[ModuleInfo.delegateKey],
-            info[ModuleInfo.buildKey],
-            info[ModuleInfo.resourcesKey]
+        return new QKModuleInfo(
+            info[QKModuleInfo.nameKey],
+            info[QKModuleInfo.versionKey],
+            info[QKModuleInfo.moduleKey],
+            info[QKModuleInfo.delegateKey],
+            info[QKModuleInfo.buildKey],
+            info[QKModuleInfo.resourcesKey]
         );
     }
 }
 
-export class ModuleResource {
+export class QKModuleResource {
     public readonly fileName: string; // File name without suffix
     public get suffix(): string { return this.url.suffix(); }
 
@@ -47,18 +48,18 @@ export class ModuleResource {
     }
 }
 
-export class Module {
+export class QKModule {
     private static infoRelativePath = "info.json";
 
-    // get infoURL(): URI { return this.baseUrl.absoluteTo(Module.infoRelativePath); }
-    get infoURL(): URI { return this.baseUrl.clone().segment(Module.infoRelativePath); }
+    // get infoURL(): URI { return this.baseUrl.absoluteTo(QKModule.infoRelativePath); }
+    get infoURL(): URI { return this.baseUrl.clone().segment(QKModule.infoRelativePath); }
     get buildURL(): URI { return this.baseUrl.clone().segment(this.info.build); }
     get resourcesURL(): URI { return this.baseUrl.clone().segment(this.info.resources); }
 
     public readonly baseUrl: URI;
-    public readonly info: ModuleInfo;
+    public readonly info: QKModuleInfo;
     public readonly source: string;
-    public readonly resources: ModuleResource[];
+    public readonly resources: QKModuleResource[];
 
     public constructor(public readonly url: URI) {
         this.baseUrl = url.segment("/").normalize();
@@ -67,21 +68,21 @@ export class Module {
         this.resources = this.indexResources();
     }
 
-    /* Module loading */
-    private loadInfo(): ModuleInfo {
-        return ModuleInfo.fromURL(this.infoURL);
+    /* QKModule loading */
+    private loadInfo(): QKModuleInfo {
+        return QKModuleInfo.fromURL(this.infoURL);
     }
 
     private loadSource(): string {
         return fs.readFileSync(this.buildURL.toString(), "utf8");
     }
 
-    private indexResources(url: URI | undefined = undefined): ModuleResource[] {
+    private indexResources(url: URI | undefined = undefined): QKModuleResource[] {
         // Use the basic URL or resources URL
         url = url ? url : this.resourcesURL;
 
         // List files in the directory and compile files to `resources`
-        let resources: ModuleResource[] = [];
+        let resources: QKModuleResource[] = [];
         let files = fs.readdirSync(url.readable());
         for (let file of files) {
             let absoluteURL = url.clone().segment(file); // Get the path to the file
@@ -90,15 +91,15 @@ export class Module {
                 absoluteURL.segment("/"); // Convert file to a path
                 resources.push(...this.indexResources(absoluteURL));
             } else { // Add this resource
-                resources.push(new ModuleResource(absoluteURL)); // Push a new resource item
+                resources.push(new QKModuleResource(absoluteURL)); // Push a new resource item
             }
         }
 
         return resources;
     }
 
-    /* Module usage */
-    public loadResource(name: string, suffix: string | undefined): ModuleResource | undefined {
+    /* QKModule usage */
+    public loadResource(name: string, suffix: string | undefined): QKModuleResource | undefined {
         for (let resource of this.resources) {
             if (
                 resource.fileName === name && // Same file name and

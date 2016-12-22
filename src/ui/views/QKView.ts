@@ -1,4 +1,5 @@
 import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType, Vector } from "quark";
+import elementResizeEvent = require("element-resize-event");
 
 /*
 https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
@@ -53,7 +54,7 @@ MouseEvent.prototype.convertToPoint = function(element: Element) {
 };
 
 function colorToCSS(color: Color): string {
-    return `rgba(${color.red * 255},${color.green * 255},${color.blue * 255},${color.alpha})`;
+    return `rgba(${Math.round(color.red * 255)},${Math.round(color.green * 255)},${Math.round(color.blue * 255)},${color.alpha})`;
 }
 
 /* Element extension */
@@ -68,7 +69,11 @@ declare global {
         _qk_shadow?: Shadow;
         _qk_cornerRadius: number;
 
-        // Event handlers
+        // Layout handling
+        _qk_resize(): void;
+        _qk_layout(): void;
+
+        // Input event handling
         _qk_handlePointerEvent(event: PointerEvent): void;
         _qk_handleKeyEvent(event: KeyboardEvent): void;
         _qk_handleWheelEvent(event: WheelEvent): void;
@@ -92,11 +97,12 @@ Object.defineProperties(HTMLElement.prototype, {
 
     qk_init: {
         value: function(this: HTMLElement) {
-            console.log("init", this.qk_view);
-
             // Style the element
             this.style.position = "absolute";
             this.style.webkitUserSelect = "none"; // Prevent text selection
+
+            // Resize event
+            elementResizeEvent(this, this._qk_resize);
 
             // Prevent right click on this element
             this.oncontextmenu = event => event.preventDefault();
@@ -140,7 +146,7 @@ Object.defineProperties(HTMLElement.prototype, {
     },
 
     qk_subviews: {
-        value: function (this: HTMLElement) {
+        get: function (this: HTMLElement) {
             return Array.prototype.slice.call(this.children)
                 .map((child: HTMLElement) => {
                     return child.qk_getOrCreateView();
@@ -158,12 +164,16 @@ Object.defineProperties(HTMLElement.prototype, {
     },
     qk_addSubview: {
         value: function (this: HTMLElement, view: View, index: number) {
+            // Add as child at proper index
             let child = view.backing as HTMLElement;
             if (index >= this.children.length) {
                 this.appendChild(child);
             } else {
                 this.insertBefore(child, this.children[index]);
             }
+
+            // Trigger a layout on the view
+            (view.backing as HTMLElement)._qk_layout();
         }
     },
     qk_removeFromSuperview: {
@@ -227,12 +237,29 @@ Object.defineProperties(HTMLElement.prototype, {
         }
     },
 
-    /* Event handling */
+    /* Layout handling */
+    _qk_resize: {
+        value: function(this: HTMLElement) {
+            // Set new _qk_rect
+            this._qk_rect = new Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
+
+            // Layout
+            this._qk_layout();
+        }
+    },
+    _qk_layout: {
+        value: function(this: HTMLElement) {
+            if (!this.qk_view) { return; }
+
+            // Layouts the view.
+            this.qk_view.layout();
+        }
+    },
+
+    /* Input event handling */
     _qk_handlePointerEvent: {
         value: function(this: HTMLElement, event: PointerEvent) {
             if (!this.qk_view) { return; }
-
-            console.log("Pointer event");
 
             // Determine the phase
             let phase: EventPhase;
