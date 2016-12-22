@@ -104,6 +104,7 @@ Object.defineProperties(HTMLElement.prototype, {
             // Style the element
             this.style.position = "absolute";
             this.style.webkitUserSelect = "none"; // Prevent text selection
+            this.style.overflow = "hidden"; // Clip the subviews
 
             // Resize event
             elementResizeEvent(this, this._qk_resize);
@@ -295,8 +296,6 @@ Object.defineProperties(HTMLElement.prototype, {
             if (document.elementsFromPoint(event.pageX, event.pageY).indexOf(this) === -1) {
                 let outEvent = new PointerEvent("pointerout", event);
                 this._qk_handlePointerEvent(outEvent);
-            } else {
-                console.log("No pointer out");
             }
         }
     },
