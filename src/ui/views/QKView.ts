@@ -64,6 +64,9 @@ declare global {
         // The `View` class sets the default values when initiated, so
         // these values are assured to be stored once created.
         _qk_rect: Rect;
+
+        _qk_clipSubviews: boolean;
+
         _qk_backgroundColor: Color;
         _qk_alpha: number;
         _qk_shadow?: Shadow;
@@ -198,6 +201,16 @@ Object.defineProperties(HTMLElement.prototype, {
             this.hidden = hidden;
         }
     },
+    qk_clipSubviews: {
+        get: function (this: HTMLElement) {
+            return this._qk_clipSubviews;
+        },
+        set: function (this: HTMLElement, clip: boolean) {
+            this._qk_clipSubviews = clip;
+            this.style.overflow = clip ? "hidden" : "visible";
+        }
+    },
+
     qk_backgroundColor: {
         get: function (this: HTMLElement) {
             return this._qk_backgroundColor;
