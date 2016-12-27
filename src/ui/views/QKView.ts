@@ -1,5 +1,5 @@
-import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType, Vector } from "quark";
-import elementResizeEvent = require("element-resize-event");
+import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType, Vector, Module } from "quark";
+import { QKInstance } from "../../core/QKInstance";
 
 /*
 https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
@@ -8,6 +8,14 @@ https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
 - Maybe stopImmediatePropagation()?
 
  */
+
+// Declare the ResizeObserver for getting resize events (part of experimental Chrome)
+declare global {
+    class ResizeObserver {
+        constructor(callback: Function)
+        public observe(element: HTMLElement): void;
+    }
+}
 
 /* CSS Value extensions */
 declare global {
@@ -47,10 +55,13 @@ String.prototype.parseNumbers = function() {
     }
 };
 
-MouseEvent.prototype.convertToPoint = function(element: Element) {
-    // let rect = element.getBoundingClientRect();
-    // return new Point(this.pageX - rect.left, this.pageY - rect.top);
-    return new Point(this.pageX, this.pageY);
+MouseEvent.prototype.convertToPoint = function(element: HTMLElement) {
+    let view = element.qk_view;
+    if (!view) { console.log("No view"); return Point.zero; }
+    let window = view.module.window;
+    if (!window) { console.log("No window"); return Point.zero; }
+    let rect = (window.rootView.backing as HTMLElement).getBoundingClientRect();
+    return new Point(this.pageX - rect.left, this.pageY - rect.top);
 };
 
 function colorToCSS(color: Color): string {
@@ -72,6 +83,9 @@ declare global {
         _qk_shadow?: Shadow;
         _qk_cornerRadius: number;
 
+        // Quick access to the QKInstance
+        _qk_instance: QKInstance;
+
         // Layout handling
         _qk_resize(): void;
         _qk_layout(): void;
@@ -90,14 +104,17 @@ declare global {
 /* HTMLElement extensions */
 Object.defineProperties(HTMLElement.prototype, {
     qk_getOrCreateView: {
-        value: function (this: HTMLElement) {
+        value: function (this: HTMLElement, module: Module) {
             if (this.qk_view) {
                 // Return existing view
                 return this.qk_view;
-            } else {
+            } else if (module.backing instanceof QKInstance) {
                 // Create and return the new view
-                this.qk_view = new View(this);
+                this.qk_view = new module.backing.quarkLibrary.View(this);
                 return this.qk_view;
+            } else {
+                console.log(module);
+                throw new Error(`Could not get \`View\` for \`HTMLElement\` because module ${module} is invalid.`);
             }
         }
     },
@@ -109,8 +126,11 @@ Object.defineProperties(HTMLElement.prototype, {
             this.style.webkitUserSelect = "none"; // Prevent text selection
             this.style.overflow = "hidden"; // Clip the subviews
 
+            /* Event handling */
             // Resize event
-            elementResizeEvent(this, this._qk_resize);
+            // elementResizeEvent(this, () => this._qk_resize());
+            // let x = new ResizeSensor(this, () => this._qk_resize());
+            new ResizeObserver(() => this._qk_resize()).observe(this);
 
             // Prevent right click on this element
             this.oncontextmenu = event => event.preventDefault();
@@ -126,11 +146,11 @@ Object.defineProperties(HTMLElement.prototype, {
             document.addEventListener("pointercancel", e => this._qk_documentPointerUp(e));
 
             // Handle key events
-            this.onkeydown = this._qk_handleKeyEvent;
-            this.onkeyup = this._qk_handleKeyEvent;
+            this.addEventListener("keydown", e => this._qk_handleKeyEvent(e));
+            this.addEventListener("keyup", e => this._qk_handleKeyEvent(e));
 
             // Handle wheel events
-            this.onwheel = this._qk_handleWheelEvent;
+            this.addEventListener("wheel", e => this._qk_handleWheelEvent(e));
 
             // TODO: Check that stored properties have values, otherwise do something
             // Will need to be read from CSS manually
@@ -156,16 +176,19 @@ Object.defineProperties(HTMLElement.prototype, {
 
     qk_subviews: {
         get: function (this: HTMLElement) {
+            if (!this.qk_view) { return []; }
+            let module = this.qk_view.module;
             return Array.prototype.slice.call(this.children)
                 .map((child: HTMLElement) => {
-                    return child.qk_getOrCreateView();
+                    return child.qk_getOrCreateView(module);
                 });
         }
     },
     qk_superview: {
         get: function (this: HTMLElement) {
+            if (!this.qk_view) { return undefined; }
             if (this.parentElement) {
-                return this.parentElement.qk_getOrCreateView();
+                return this.parentElement.qk_getOrCreateView(this.qk_view.module);
             } else {
                 return undefined;
             }
@@ -256,10 +279,18 @@ Object.defineProperties(HTMLElement.prototype, {
         }
     },
 
+    /* Run in VM */
+    _qk_instance: {
+        get: function(this: HTMLElement): QKInstance {
+            if (!this.qk_view) { throw new Error("Attempting to access `QKInstance` for element with no `qk_view`."); }
+            return this.qk_view.module.backing as QKInstance;
+        }
+    },
+
     /* Layout handling */
     _qk_resize: {
         value: function(this: HTMLElement) {
-            // Set new _qk_rect
+            // Save new _qk_rect
             this._qk_rect = new Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
 
             // Layout
@@ -425,4 +456,4 @@ Object.defineProperties(HTMLElement.prototype, {
     }
 });
 
-View.backingInit = () => document.createElement("div");
+export function createBacking() { return document.createElement("div"); }

@@ -1,5 +1,7 @@
-import { Logger } from "quark";
+import { LoggerBacking } from "quark";
 
-Logger.qk_output = function(messages: any[]): void {
-    console.log(messages.shift(), ...messages);
+export let QKLogger: LoggerBacking = {
+    qk_output(messages: any[]): void {
+        console.log(messages.shift(), ...messages);
+    }
 };

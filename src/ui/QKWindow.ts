@@ -5,7 +5,7 @@ export class QKWindow implements WindowBacking {
 
     public get qk_rootView(): View { return this.rootView; }
 
-    public constructor(element: HTMLElement) {
-        this.rootView = new RootView(element);
+    public constructor(view: View) {
+        this.rootView = view;
     }
 }

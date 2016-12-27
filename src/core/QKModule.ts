@@ -1,6 +1,5 @@
 import fs = require("fs");
 import URI = uri.URI;
-// import * as URI from "urijs";
 
 export class QKModuleInfo {
     // The keys used in the info.js file
@@ -61,6 +60,7 @@ export class QKModule {
     public readonly source: string;
     public readonly resources: QKModuleResource[];
 
+    /* Constructor */
     public constructor(public readonly url: URI) {
         this.baseUrl = url.segment("/").normalize();
         this.info = this.loadInfo();
