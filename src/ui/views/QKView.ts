@@ -1,13 +1,5 @@
-import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType, Vector, Module } from "quark";
+import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType, Vector } from "quark";
 import { QKInstance } from "../../core/QKInstance";
-
-/*
-https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
-- Flag `capture` on all events and implement responder chain manually
-- Or use `Event.stopPropegating` to stop it https://developer.mozilla.org/en-US/docs/Web/API/Event
-- Maybe stopImmediatePropagation()?
-
- */
 
 // Declare the ResizeObserver for getting resize events (part of experimental Chrome)
 declare global {
@@ -103,22 +95,6 @@ declare global {
 
 /* HTMLElement extensions */
 Object.defineProperties(HTMLElement.prototype, {
-    qk_getOrCreateView: {
-        value: function (this: HTMLElement, module: Module) {
-            if (this.qk_view) {
-                // Return existing view
-                return this.qk_view;
-            } else if (module.backing instanceof QKInstance) {
-                // Create and return the new view
-                this.qk_view = new module.backing.quarkLibrary.View(this);
-                return this.qk_view;
-            } else {
-                console.log(module);
-                throw new Error(`Could not get \`View\` for \`HTMLElement\` because module ${module} is invalid.`);
-            }
-        }
-    },
-
     qk_init: {
         value: function(this: HTMLElement) {
             // Style the element
@@ -176,19 +152,16 @@ Object.defineProperties(HTMLElement.prototype, {
 
     qk_subviews: {
         get: function (this: HTMLElement) {
-            if (!this.qk_view) { return []; }
-            let module = this.qk_view.module;
             return Array.prototype.slice.call(this.children)
-                .map((child: HTMLElement) => {
-                    return child.qk_getOrCreateView(module);
-                });
+                .map((child: HTMLElement) => child.qk_view)
+                .filter((child?: View) => typeof child !== "undefined");
         }
     },
     qk_superview: {
         get: function (this: HTMLElement) {
             if (!this.qk_view) { return undefined; }
             if (this.parentElement) {
-                return this.parentElement.qk_getOrCreateView(this.qk_view.module);
+                return this.parentElement.qk_view;
             } else {
                 return undefined;
             }
