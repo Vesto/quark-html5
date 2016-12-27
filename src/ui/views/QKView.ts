@@ -82,11 +82,16 @@ declare global {
         _qk_resize(): void;
         _qk_layout(): void;
 
+        // Events (stored here so they can be cancelled or reused)
+        _qk_pointerMoveEvent: (e: PointerEvent) => void;
+        _qk_pointerUpEvent: (e: PointerEvent) => void;
+
         // Input event handling
         _qk_isDragging: boolean; // If the pointer is dragging // TODO: Find out how to individually identify pointer events (id not working)
+        _qk_setDragging(dragging: boolean): void;
         _qk_pointerDown(event: PointerEvent): void; // Handles pointer down
-        _qk_documentPointerMove(event: PointerEvent): void; // Handles pointer move globally
-        _qk_documentPointerUp(event: PointerEvent): void; // Handles pointer up globally
+        _qk_pointerMove(event: PointerEvent): void; // Handles pointer move globally
+        _qk_pointerUp(event: PointerEvent): void; // Handles pointer up globally
         _qk_handlePointerEvent(event: PointerEvent): void; // Handles all other pointer events
         _qk_handleKeyEvent(event: KeyboardEvent): void;
         _qk_handleWheelEvent(event: WheelEvent): void;
@@ -114,12 +119,14 @@ Object.defineProperties(HTMLElement.prototype, {
             // Handle pointer events (includes mice, touches, styluses) // See https://jsfiddle.net/jnL0xsa3/5/
             this._qk_isDragging = false;
             this.addEventListener("pointerenter", e => this._qk_handlePointerEvent(e));
-            document.addEventListener("pointermove", e => this._qk_documentPointerMove(e));
             this.addEventListener("pointerout", e => this._qk_handlePointerEvent(e));
 
             this.addEventListener("pointerdown", e => this._qk_pointerDown(e));
-            document.addEventListener("pointerup", e => this._qk_documentPointerUp(e));
-            document.addEventListener("pointercancel", e => this._qk_documentPointerUp(e));
+
+            this._qk_pointerMoveEvent = (e) => this._qk_pointerMove(e);
+            this._qk_pointerUpEvent = (e) => this._qk_pointerUp(e);
+
+            this._qk_setDragging(false); // Registers proper events
 
             // Handle key events
             this.addEventListener("keydown", e => this._qk_handleKeyEvent(e));
@@ -280,34 +287,59 @@ Object.defineProperties(HTMLElement.prototype, {
     },
 
     /* Input event handling */
+    _qk_setDragging: {
+        value: function(this: HTMLElement, dragging: boolean) {
+            // Make sure there's a change
+            if (dragging === this._qk_isDragging) { return; }
+
+            // Save events
+            this._qk_isDragging = dragging;
+
+            // Register proper events
+            if (dragging) {
+                // Remove local events
+                this.removeEventListener("pointermove", this._qk_pointerMoveEvent);
+
+                // Add document events
+                document.addEventListener("pointermove", this._qk_pointerMoveEvent);
+                document.addEventListener("pointerup", this._qk_pointerUpEvent);
+                document.addEventListener("pointercancel", this._qk_pointerUpEvent);
+            } else {
+                // Add local events
+                this.addEventListener("pointermove", this._qk_pointerMoveEvent);
+
+                // Remove global events
+                document.removeEventListener("pointermove", this._qk_pointerMoveEvent);
+                document.removeEventListener("pointerup", this._qk_pointerUpEvent);
+                document.removeEventListener("pointercancel", this._qk_pointerUpEvent);
+            }
+        }
+    },
     _qk_pointerDown: {
         value: function(this: HTMLElement, event: PointerEvent) {
             // Save dragging
-            this._qk_isDragging = true;
+            this._qk_setDragging(true);
 
             // Handle event
             this._qk_handlePointerEvent(event);
         }
     },
-    _qk_documentPointerMove: {
+    _qk_pointerMove: {
+        value: function(this: HTMLElement, event: PointerEvent) {
+            // Handle event
+            this._qk_handlePointerEvent(event);
+        }
+    },
+    _qk_pointerUp: {
         value: function(this: HTMLElement, event: PointerEvent) {
             // Make sure dragging with right pointer
             if (!this._qk_isDragging) { return; }
 
             // Handle event
             this._qk_handlePointerEvent(event);
-        }
-    },
-    _qk_documentPointerUp: {
-        value: function(this: HTMLElement, event: PointerEvent) {
-            // Make sure dragging with right pointer
-            if (!this._qk_isDragging) { return; }
 
             // Stop dragging
-            this._qk_isDragging = false;
-
-            // Handle event
-            this._qk_handlePointerEvent(event);
+            this._qk_setDragging(false);
 
             // If pointer outside of element when pointer up, call `pointerout` event
             if (document.elementsFromPoint(event.pageX, event.pageY).indexOf(this) === -1) {
@@ -342,11 +374,6 @@ Object.defineProperties(HTMLElement.prototype, {
                     return;
             }
 
-            // Don't send events if currently dragging, will send pointerout if needed when mouse up
-            if (this._qk_isDragging && (event.type === "pointerenter" || event.type === "pointerout")) {
-                return;
-            }
-
             // Determine the interaction type
             let type: InteractionType;
             switch (event.pointerType) {
@@ -374,6 +401,17 @@ Object.defineProperties(HTMLElement.prototype, {
                 default:
                     // TODO: Log unhandled
                     return;
+            }
+
+            // Don't send events if currently dragging, will send pointerout if needed when mouse up
+            if (this._qk_isDragging && (event.type === "pointerenter" || event.type === "pointerout")) {
+                return;
+            }
+
+            // Don't send events if is not dragging but is a hover. This way, if an element below another element is
+            // dragged below the element above it, the element above it will not capture events.
+            if (!this._qk_isDragging && type !== InteractionType.Hover) {
+                return;
             }
 
             let shouldCapture = this.qk_view.interactionEvent(
