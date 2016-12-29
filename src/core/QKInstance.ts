@@ -61,8 +61,6 @@ export class QKInstance implements ModuleBacking {
 
             // Create the delegate
             this.delegate = new this.delegateClass();
-
-            console.log("Final context", this.context);
         } catch (e) {
             console.log("Error", e, e.stack);
         }

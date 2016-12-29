@@ -1,8 +1,22 @@
-import { ButtonBacking, Appearance, Label } from "quark";
+import { ButtonBacking, Appearance, Label, AppearanceStyle } from "quark";
 import { QKView } from "./QKView";
 
 export class QKButton extends QKView implements ButtonBacking {
     private titleLabel: Label;
+
+    private _qk_isEnabled: boolean;
+    public get qk_isEnabled(): boolean { return this._qk_isEnabled; }
+    public set qk_isEnabled(enabled: boolean) {
+        this._qk_isEnabled = enabled;
+        this._restyleButton();
+    }
+
+    private _qk_isEmphasized: boolean;
+    public get qk_isEmphasized(): boolean { return this._qk_isEmphasized; }
+    public set qk_isEmphasized(emphasized: boolean) {
+        this._qk_isEmphasized = emphasized;
+        this._restyleButton();
+    }
 
     public get qk_title(): string { return this.titleLabel.text; }
     public set qk_title(title: string) { this.titleLabel.text = title; }
@@ -23,11 +37,26 @@ export class QKButton extends QKView implements ButtonBacking {
     public qk_appearanceChanged(appearance: Appearance) {
         super.qk_appearanceChanged(appearance);
 
-        console.log("Button appearance");
+        this._restyleButton();
 
-        // Style the view // TODO: Style with emphasis, etc.
+    }
+
+    private _restyleButton() {
         if (!this.qk_view) { return; }
-        appearance.activeControl.styleView(this.qk_view, this.titleLabel);
+
+        // Get the appropriate style
+        let appearance = this.qk_view.appearance;
+        let style: AppearanceStyle;
+        if (!this._qk_isEnabled) {
+            style = appearance.disabledControl;
+        } else if (this.qk_isEmphasized) {
+            style = appearance.activeControl;
+        } else {
+            style = appearance.normalControl;
+        }
+
+        // Style the view
+        style.styleView(this.qk_view, this.titleLabel);
     }
 
     public _qk_layout() {
