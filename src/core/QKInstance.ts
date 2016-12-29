@@ -4,20 +4,22 @@ import { View, ModuleDelegate, ModuleDelegateConstructor, Window, ModuleBacking 
 
 import { QKModule } from "./QKModule";
 import { QKLogger } from "./QKLogger";
-import { createBacking } from "../ui/views/QKView";
 import { QKWindow } from "../ui/QKWindow";
 import { QKAnimationLoop, startAnimating } from "../utils/QKAnimationLoop";
 import { QKTimer } from "../utils/QKTimer";
 
+import { QKView, createViewBacking } from "../ui/views/QKView";
+
 import { VM } from "vm2";
 import fs = require("fs");
+import { createLabelBacking } from "../ui/views/QKLabel";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
     /* Parameters */
     public rootView: View;
 
-    public rootElement(): HTMLElement { return this.rootView.backing as HTMLElement; }
+    public rootElement(): HTMLElement { return this.rootView.backing as QKView; }
 
     // Return properties from the context
     public get moduleInstance(): any { return this.context[this.module.info.module]; }
@@ -77,9 +79,9 @@ export class QKInstance implements ModuleBacking {
         // TODO: These
 
         // UI
-        this.quarkLibrary.View.createBacking = createBacking;
-        this.quarkLibrary.Button.createBacking = () => { console.log("Unimplemented."); return this.quarkLibrary.View.createBacking(); };
-        this.quarkLibrary.Label.createBacking = () => { console.log("Unimplemented."); return this.quarkLibrary.View.createBacking(); };
+        this.quarkLibrary.View.createBacking = createViewBacking;
+        this.quarkLibrary.Button.createBacking = createViewBacking;
+        this.quarkLibrary.Label.createBacking = createLabelBacking;
         // TODO: Button and label
 
         // Utils
@@ -88,7 +90,7 @@ export class QKInstance implements ModuleBacking {
     }
 
     /* Methods */
-    public start(rootElement: HTMLElement) {
+    public start(qkView: QKView) {
         // Make sure not running
         if (this.running) { return; }
 
@@ -96,7 +98,7 @@ export class QKInstance implements ModuleBacking {
         this.running = true;
 
         // Save the window
-        let rootView = new this.quarkLibrary.RootView(rootElement);
+        let rootView = new this.quarkLibrary.RootView(qkView);
         let qkWindow = new QKWindow(rootView);
         this.window = new this.quarkLibrary.Window(qkWindow);
         if (!rootView || !qkWindow || !this.window) { throw new Error("Could not create `Window` for Quark."); }
