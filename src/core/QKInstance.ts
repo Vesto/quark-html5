@@ -1,13 +1,16 @@
 /// <reference path="./vm2.d.ts"/>
 
 import { View, ModuleDelegate, ModuleDelegateConstructor, Window, ModuleBacking } from "quark";
-import { QKModule } from "./QKModule";
-import { VM } from "vm2";
 
-import fs = require("fs");
+import { QKModule } from "./QKModule";
 import { QKLogger } from "./QKLogger";
 import { createBacking } from "../ui/views/QKView";
 import { QKWindow } from "../ui/QKWindow";
+import { QKAnimationLoop, startAnimating } from "../utils/QKAnimationLoop";
+import { QKTimer } from "../utils/QKTimer";
+
+import { VM } from "vm2";
+import fs = require("fs");
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -79,7 +82,9 @@ export class QKInstance implements ModuleBacking {
         this.quarkLibrary.Label.createBacking = () => { console.log("Unimplemented."); return this.quarkLibrary.View.createBacking(); };
         // TODO: Button and label
 
-        console.log("Assigned backings");
+        // Utils
+        this.quarkLibrary.AnimationLoop.backing = QKAnimationLoop;
+        this.quarkLibrary.Timer.backing = QKTimer;
     }
 
     /* Methods */
@@ -91,12 +96,15 @@ export class QKInstance implements ModuleBacking {
         this.running = true;
 
         // Save the window
-        let rootView = new this.quarkLibrary.View(rootElement);
+        let rootView = new this.quarkLibrary.RootView(rootElement);
         let qkWindow = new QKWindow(rootView);
         this.window = new this.quarkLibrary.Window(qkWindow);
         if (!rootView || !qkWindow || !this.window) { throw new Error("Could not create `Window` for Quark."); }
 
         // Create the interface
         this.delegate.createInterface(this.window);
+
+        // Start the animation loop
+        startAnimating(true);
     }
 }

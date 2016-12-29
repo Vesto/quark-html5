@@ -53,7 +53,7 @@ MouseEvent.prototype.convertToPoint = function(element: HTMLElement) {
     let window = view.module.window;
     if (!window) { console.log("No window"); return Point.zero; }
     let rect = (window.rootView.backing as HTMLElement).getBoundingClientRect();
-    return new Point(this.pageX - rect.left, this.pageY - rect.top);
+    return new element._qk_lib.Point(this.pageX - rect.left, this.pageY - rect.top);
 };
 
 function colorToCSS(color: Color): string {
@@ -76,6 +76,7 @@ declare global {
         _qk_cornerRadius: number;
 
         // Quick access to the QKInstance
+        _qk_lib: any; // The Quark library
         _qk_instance: QKInstance;
 
         // Layout handling
@@ -87,6 +88,7 @@ declare global {
         _qk_pointerUpEvent: (e: PointerEvent) => void;
 
         // Input event handling
+        _qk_previousInteractionType: InteractionType; // Use this so when `pointerup` is called, we can determine which button was let up
         _qk_isDragging: boolean; // If the pointer is dragging // TODO: Find out how to individually identify pointer events (id not working)
         _qk_setDragging(dragging: boolean): void;
         _qk_pointerDown(event: PointerEvent): void; // Handles pointer down
@@ -105,7 +107,6 @@ Object.defineProperties(HTMLElement.prototype, {
             // Style the element
             this.style.position = "absolute";
             this.style.webkitUserSelect = "none"; // Prevent text selection
-            this.style.overflow = "hidden"; // Clip the subviews
 
             /* Event handling */
             // Resize event
@@ -134,9 +135,6 @@ Object.defineProperties(HTMLElement.prototype, {
 
             // Handle wheel events
             this.addEventListener("wheel", e => this._qk_handleWheelEvent(e));
-
-            // TODO: Check that stored properties have values, otherwise do something
-            // Will need to be read from CSS manually
         }
     },
 
@@ -260,6 +258,11 @@ Object.defineProperties(HTMLElement.prototype, {
     },
 
     /* Run in VM */
+    _qk_lib: {
+        get: function(this: HTMLElement): any {
+            return this._qk_instance.quarkLibrary;
+        }
+    },
     _qk_instance: {
         get: function(this: HTMLElement): QKInstance {
             if (!this.qk_view) { throw new Error("Attempting to access `QKInstance` for element with no `qk_view`."); }
@@ -271,7 +274,7 @@ Object.defineProperties(HTMLElement.prototype, {
     _qk_resize: {
         value: function(this: HTMLElement) {
             // Save new _qk_rect
-            this._qk_rect = new Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
+            this._qk_rect = new this._qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
 
             // Layout
             this._qk_layout();
@@ -403,6 +406,15 @@ Object.defineProperties(HTMLElement.prototype, {
                     return;
             }
 
+            // Override phase if the pointer is released. `pointerup` tells us there's no buttons down (hovering), we
+            // need to look at the previous interaction type to see.
+            if (this._qk_previousInteractionType && (event.type === "pointerup" || event.type === "pointercancel")) {
+                type = this._qk_previousInteractionType;
+            }
+
+            // Save the previous interaction type for the next event.
+            this._qk_previousInteractionType = type;
+
             // Don't send events if currently dragging, will send pointerout if needed when mouse up
             if (this._qk_isDragging && (event.type === "pointerenter" || event.type === "pointerout")) {
                 return;
@@ -458,7 +470,7 @@ Object.defineProperties(HTMLElement.prototype, {
                     event.timeStamp,
                     event,
                     event.convertToPoint(this), // TODO: location in root view
-                    new Vector(event.wheelDeltaX, event.wheelDeltaY)
+                    new this._qk_lib.Vector(event.wheelDeltaX, event.wheelDeltaY)
                 )
             );
 
