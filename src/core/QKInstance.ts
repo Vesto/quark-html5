@@ -13,6 +13,7 @@ import { QKView, createViewBacking } from "../ui/views/QKView";
 import { VM } from "vm2";
 import fs = require("fs");
 import { createLabelBacking } from "../ui/views/QKLabel";
+import { createButtonBacking } from "../ui/views/QKButton";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -80,9 +81,8 @@ export class QKInstance implements ModuleBacking {
 
         // UI
         this.quarkLibrary.View.createBacking = createViewBacking;
-        this.quarkLibrary.Button.createBacking = createViewBacking;
+        this.quarkLibrary.Button.createBacking = createButtonBacking;
         this.quarkLibrary.Label.createBacking = createLabelBacking;
-        // TODO: Button and label
 
         // Utils
         this.quarkLibrary.AnimationLoop.backing = QKAnimationLoop;

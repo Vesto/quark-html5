@@ -1,4 +1,4 @@
-import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType } from "quark";
+import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType, Appearance } from "quark";
 import { QKInstance } from "../../core/QKInstance";
 
 // Declare the ResizeObserver for getting resize events (part of experimental Chrome)
@@ -111,7 +111,11 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     public qk_init() {
-        // Nothing to do
+        // Do nothing
+    }
+
+    public qk_appearanceChanged(appearance: Appearance) {
+        // Do nothing
     }
 
     /* Layout */
