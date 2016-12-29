@@ -147,6 +147,11 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     public qk_addSubview(view: View, index: number): void {
+        // Remove from previous superview if needed
+        if (view.superview) {
+            view.removeFromSuperview();
+        }
+
         // Add as child at proper index
         let child = view.backing as QKView;
         if (index >= this.children.length) {
@@ -155,14 +160,23 @@ export class QKView extends HTMLElement implements ViewBacking {
             this.insertBefore(child, this.children[index]);
         }
 
+        // Notify the child
+        view.movedToSuperview(this.qk_view);
+
         // Trigger a layout on the view
         (view.backing as QKView)._qk_layout();
     }
 
     public qk_removeFromSuperview(): void {
+        if (!this.qk_view) { return; }
+
+        // Remove from the parent
         if (this.parentElement) {
             this.parentElement.removeChild(this);
         }
+
+        // Notify the view
+        this.qk_view.movedToSuperview(undefined);
     }
 
     /* Visibility */
