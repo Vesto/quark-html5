@@ -1,25 +1,10 @@
-import { ButtonBacking, Appearance, Label, AppearanceStyle, TextAlignmentMode, TextVerticalAlignmentMode } from "quark";
+import { Button, ButtonBacking, Appearance, Label, AppearanceStyle, TextAlignmentMode, TextVerticalAlignmentMode } from "quark";
 import { QKView } from "./QKView";
 
 export class QKButton extends QKView implements ButtonBacking {
+    protected get qk_button(): Button { return this.qk_view as Button; }
+
     private titleLabel: Label;
-
-    private _qk_isEnabled: boolean;
-    public get qk_isEnabled(): boolean { return this._qk_isEnabled; }
-    public set qk_isEnabled(enabled: boolean) {
-        this._qk_isEnabled = enabled;
-        this._restyleButton();
-    }
-
-    private _qk_isEmphasized: boolean;
-    public get qk_isEmphasized(): boolean { return this._qk_isEmphasized; }
-    public set qk_isEmphasized(emphasized: boolean) {
-        this._qk_isEmphasized = emphasized;
-        this._restyleButton();
-    }
-
-    public get qk_title(): string { return this.titleLabel.text; }
-    public set qk_title(title: string) { this.titleLabel.text = title; }
 
     public constructor() {
         super();
@@ -39,18 +24,24 @@ export class QKButton extends QKView implements ButtonBacking {
     public qk_appearanceChanged(appearance: Appearance) {
         super.qk_appearanceChanged(appearance);
 
-        this._restyleButton();
+        this.restyleButton();
     }
 
-    private _restyleButton() {
+    public qk_setTitle(title: string) { this.titleLabel.text = title; }
+
+    public qk_setIsEnabled(enabled: boolean) { this.restyleButton(); }
+
+    public qk_setIsEmphasized(emphasized: boolean) { this.restyleButton(); }
+
+    private restyleButton() {
         if (!this.qk_view) { return; }
 
         // Get the appropriate style
         let appearance = this.qk_view.appearance;
         let style: AppearanceStyle;
-        if (!this._qk_isEnabled) {
+        if (!this.qk_button.isEnabled) {
             style = appearance.disabledControl;
-        } else if (this.qk_isEmphasized) {
+        } else if (this.qk_button.isEmphasized) {
             style = appearance.activeControl;
         } else {
             style = appearance.normalControl;

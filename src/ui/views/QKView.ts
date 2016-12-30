@@ -227,10 +227,6 @@ export class QKView extends HTMLElement implements ViewBacking {
 
     /* Layout Handling */
     protected _qk_resize() {
-        if (this.qk_view instanceof this.qk_lib.RootView) {
-            console.log("Resize", this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
-        }
-        console.log(this.qk_view.constructor.name, "Resize");
         // Save new _qk_rect
         this.qk_view.rect = new this.qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
 
