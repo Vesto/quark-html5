@@ -1,4 +1,4 @@
-import { ButtonBacking, Appearance, Label, AppearanceStyle } from "quark";
+import { ButtonBacking, Appearance, Label, AppearanceStyle, TextAlignmentMode, TextVerticalAlignmentMode } from "quark";
 import { QKView } from "./QKView";
 
 export class QKButton extends QKView implements ButtonBacking {
@@ -31,6 +31,8 @@ export class QKButton extends QKView implements ButtonBacking {
         // Create a new label
         if (!this.qk_view) { return; }
         this.titleLabel = new this.qk_lib.Label();
+        this.titleLabel.alignmentMode = TextAlignmentMode.Center;
+        this.titleLabel.verticalAlignmentMode = TextVerticalAlignmentMode.Center;
         this.qk_view.addSubview(this.titleLabel);
     }
 
@@ -38,7 +40,6 @@ export class QKButton extends QKView implements ButtonBacking {
         super.qk_appearanceChanged(appearance);
 
         this._restyleButton();
-
     }
 
     private _restyleButton() {

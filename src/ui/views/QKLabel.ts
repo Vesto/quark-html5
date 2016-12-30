@@ -5,8 +5,8 @@ export class QKLabel extends QKView implements LabelBacking {
     public constructor() {
         super();
 
-        // Set to table-cell display so vertical center alignment works with multiple lines
-        this.style.display = "table-cell";
+        // Use a flexbox so it can align the text properly
+        this.style.display = "flex";
     }
 
     get qk_text(): string { return this.textContent ? this.textContent : ""; }
@@ -71,18 +71,23 @@ export class QKLabel extends QKView implements LabelBacking {
 
         // Get the CSS mode
         let cssMode: string;
+        let cssFlexMode: string;
         switch (mode) {
             case TextAlignmentMode.Left:
                 cssMode = "left";
+                cssFlexMode = "flex-start";
                 break;
             case TextAlignmentMode.Right:
                 cssMode = "right";
+                cssFlexMode = "flex-end";
                 break;
             case TextAlignmentMode.Center:
                 cssMode = "center";
+                cssFlexMode = "center";
                 break;
             case TextAlignmentMode.Justify:
                 cssMode = "justify";
+                cssFlexMode = "flex-start";
                 break;
             default:
                 return;
@@ -90,6 +95,7 @@ export class QKLabel extends QKView implements LabelBacking {
 
         // Set the alignment
         this.style.textAlign = cssMode;
+        this.style.justifyContent = cssFlexMode; // Uses flexbox to align left, center, and right
     }
 
     private _qk_verticalAlignmentMode: TextVerticalAlignmentMode;
@@ -102,20 +108,20 @@ export class QKLabel extends QKView implements LabelBacking {
         let cssMode: string;
         switch (mode) {
             case TextVerticalAlignmentMode.Top:
-                cssMode = "top";
+                cssMode = "flex-start";
                 break;
             case TextVerticalAlignmentMode.Bottom:
-                cssMode = "bottom";
+                cssMode = "flex-end";
                 break;
-            case TextVerticalAlignmentMode.Middle:
-                cssMode = "middle";
+            case TextVerticalAlignmentMode.Center:
+                cssMode = "center";
                 break;
             default:
                 return;
         }
 
         // Set the alignment
-        this.style.verticalAlign = cssMode;
+        this.style.alignItems = cssMode; // Uses flexbox to align at top, bottom, or middle
     }
 }
 
