@@ -1,4 +1,4 @@
-import { LabelBacking, Font, Color, LineBreakMode, TextAlignmentMode } from "quark";
+import { LabelBacking, Font, Color, LineBreakMode, TextAlignmentMode, TextVerticalAlignmentMode } from "quark";
 import { colorToCSS, QKView } from "./QKView";
 
 export class QKLabel extends QKView implements LabelBacking {
@@ -12,7 +12,24 @@ export class QKLabel extends QKView implements LabelBacking {
     get qk_text(): string { return this.textContent ? this.textContent : ""; }
     set qk_text(text: string) { this.textContent = text; }
 
-    public qk_font: Font; // TODO: Implement
+    private _qk_font: Font;
+    public get qk_font(): Font { return this._qk_font; }
+    public set qk_font(font: Font) {
+        // Save the font
+        this._qk_font = font;
+
+        // Assign the style
+        this.style.fontSize = font.size.toCSS();
+        this.style.fontFamily = `"${font.family}"`;
+        this.style.fontStyle = font.italic ? "italic" : "normal";
+        this.style.fontWeight = font.weight.toString();
+        let stretches = [
+            "semi-condensed", "condensed", "extra-condensed", "ultra-condensed",
+            "normal",
+            "semi-expanded", "expanded", "extra-expanded", "ultra-expanded"
+        ];
+        this.style.fontStretch = stretches[font.width + 1]; // Lookup the CSS font stretch property
+    }
 
     private _qk_textColor: Color;
     public get qk_textColor(): Color { return this._qk_textColor; }
@@ -75,7 +92,31 @@ export class QKLabel extends QKView implements LabelBacking {
         this.style.textAlign = cssMode;
     }
 
-    // TODO: vertical alignment
+    private _qk_verticalAlignmentMode: TextVerticalAlignmentMode;
+    get qk_verticalAlignmentMode(): TextVerticalAlignmentMode { return this._qk_verticalAlignmentMode; }
+    set qk_verticalAlignmentMode(mode: TextVerticalAlignmentMode) {
+        // Save the mode
+        this._qk_verticalAlignmentMode = mode;
+
+        // Get the CSS mode
+        let cssMode: string;
+        switch (mode) {
+            case TextVerticalAlignmentMode.Top:
+                cssMode = "top";
+                break;
+            case TextVerticalAlignmentMode.Bottom:
+                cssMode = "bottom";
+                break;
+            case TextVerticalAlignmentMode.Middle:
+                cssMode = "middle";
+                break;
+            default:
+                return;
+        }
+
+        // Set the alignment
+        this.style.verticalAlign = cssMode;
+    }
 }
 
 // Register the element with the window

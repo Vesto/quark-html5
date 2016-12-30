@@ -14,6 +14,7 @@ import { VM } from "vm2";
 import fs = require("fs");
 import { createLabelBacking } from "../ui/views/QKLabel";
 import { createButtonBacking } from "../ui/views/QKButton";
+import { QKFont } from "../types/QKFont";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -75,7 +76,7 @@ export class QKInstance implements ModuleBacking {
         this.quarkLibrary.Logger.backing = QKLogger;
 
         // Types
-        // TODO: These
+        this.quarkLibrary.Font.backing = QKFont;
 
         // UI
         this.quarkLibrary.View.createBacking = createViewBacking;
