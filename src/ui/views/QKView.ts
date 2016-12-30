@@ -68,7 +68,7 @@ export function colorToCSS(color: Color): string {
 /* Element extension */
 export class QKView extends HTMLElement implements ViewBacking {
     // View
-    public qk_view?: View;
+    public qk_view: View;
 
     // Initialization
     public constructor() {
@@ -121,12 +121,7 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     /* Layout */
-    private _qk_rect: Rect = Rect.zero;
-    get qk_rect(): Rect { return this._qk_rect; }
-    set qk_rect(rect: Rect) {
-        // Save the Rect
-        this._qk_rect = rect;
-
+    public qk_setRect(rect: Rect) {
         // Set the style properties
         this.style.left = rect.x.toCSS();
         this.style.top = rect.y.toCSS();
@@ -142,8 +137,6 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     public get qk_superview(): View | undefined {
-        if (!this.qk_view) { return undefined; }
-
         if (this.parentElement instanceof QKView) {
             return this.parentElement.qk_view;
         } else {
@@ -173,8 +166,6 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     public qk_removeFromSuperview(): void {
-        if (!this.qk_view) { return; }
-
         // Remove from the parent
         if (this.parentElement) {
             this.parentElement.removeChild(this);
@@ -185,40 +176,19 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     /* Visibility */
-    public get qk_isHidden(): boolean { return this.hidden; }
-    public set qk_isHidden(hidden: boolean) { this.hidden = hidden; }
+    public qk_setIsHidden(hidden: boolean) { this.hidden = hidden; }
 
-    private _qk_clipSubviews: boolean;
-    public get qk_clipSubviews(): boolean { return this._qk_clipSubviews; }
-    public set qk_clipSubviews(clip: boolean) {
-        this._qk_clipSubviews = clip;
-        this.style.overflow = clip ? "hidden" : "visible";
-    }
+    public qk_setClipSubviews(clip: boolean) { this.style.overflow = clip ? "hidden" : "visible"; }
 
     /* Style */
-    private _qk_backgroundColor: Color;
-    public get qk_backgroundColor(): Color { return this._qk_backgroundColor; }
-    public set qk_backgroundColor(color: Color) {
-        this._qk_backgroundColor = color;
-        this.style.backgroundColor = colorToCSS(color);
-    }
+    public qk_setBackgroundColor(color: Color) { this.style.backgroundColor = colorToCSS(color); }
 
-    private _qk_alpha: number;
-    public get qk_alpha(): number { return this._qk_alpha; }
-    public set qk_alpha(alpha: number) {
-        this._qk_alpha = alpha;
-        this.style.opacity = alpha.toString();
-    }
+    public qk_setAlpha(alpha: number) { this.style.opacity = alpha.toString(); }
 
     // Filters are GPU accelerated so slightly faster. However, each one renders differently and has a unique style.
     // Filter shadows seem to have some subtle rendering artifacts.
     private _useFilterShadow: boolean = true;
-
-    private _qk_shadow?: Shadow;
-    public get qk_shadow(): Shadow | undefined { return this._qk_shadow; }
-    public set qk_shadow(shadow: Shadow | undefined) {
-        this._qk_shadow = shadow;
-
+    public qk_setShadow(shadow: Shadow | undefined) {
         if (this._useFilterShadow) { // Use filter shadow
             if (shadow) {
                 this.style.filter =
@@ -244,12 +214,7 @@ export class QKView extends HTMLElement implements ViewBacking {
         }
     }
 
-    private _qk_cornerRadius: number;
-    public get qk_cornerRadius(): number { return this._qk_cornerRadius; }
-    public set qk_cornerRadius(radius: number) {
-        this._qk_cornerRadius = radius;
-        this.style.borderRadius = radius.toCSS();
-    }
+    public qk_setCornerRadius(radius: number) { this.style.borderRadius = radius.toCSS(); }
 
     /* VM interface */
     public get qk_lib(): any {
@@ -257,22 +222,23 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     public get qk_instance(): QKInstance {
-        if (!this.qk_view) { throw new Error("Attempting to access `QKInstance` for element with no `qk_view`."); }
         return this.qk_view.module.backing as QKInstance;
     }
 
     /* Layout Handling */
     protected _qk_resize() {
+        if (this.qk_view instanceof this.qk_lib.RootView) {
+            console.log("Resize", this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
+        }
+        console.log(this.qk_view.constructor.name, "Resize");
         // Save new _qk_rect
-        this._qk_rect = new this.qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
+        this.qk_view.rect = new this.qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
 
-        // Layout
+        // Trigger a layout
         this._qk_layout();
     }
 
     protected _qk_layout() {
-        if (!this.qk_view) { return; }
-
         // Layouts the view.
         this.qk_view.layout();
     }
@@ -346,8 +312,6 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     private _qk_handlePointerEvent(event: PointerEvent) {
-        if (!this.qk_view) { return; }
-
         // Determine the phase
         let phase: EventPhase;
         switch (event.type) {
@@ -438,8 +402,6 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     private _qk_handleKeyEvent(event: KeyboardEvent) {
-        if (!this.qk_view) { return; }
-
         let isDown = event.type !== "keyup"; // Look at the event type to determine if it's down
 
         let shouldCapture = this.qk_view.keyEvent(
@@ -456,8 +418,6 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     private _qk_handleWheelEvent(event: WheelEvent) {
-        if (!this.qk_view) { return; }
-
         let shouldCapture = this.qk_view.scrollEvent(
             new ScrollEvent(
                 event.timeStamp,
