@@ -326,10 +326,6 @@ export class QKView extends HTMLElement implements ViewBacking {
     private _qk_pointerMove(event: PointerEvent) {
         // Handle event
         this._qk_handlePointerEvent(event);
-
-        if (this.qk_view && this.qk_view.constructor.name === "DraggableView") {
-            console.log("Moved");
-        }
     }
 
     private _qk_pointerUp(event: PointerEvent) {
