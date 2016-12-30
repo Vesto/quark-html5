@@ -83,6 +83,9 @@ export class QKView extends HTMLElement implements ViewBacking {
         // Don't show any custom cursors
         this.style.cursor = "default";
 
+        // GPU accelerate the view
+        this.style.transform = "translate3d(0, 0, 0)";
+
         /* Event handling */
         // Resize event
         new ResizeObserver(() => this._qk_resize()).observe(this);
@@ -209,18 +212,37 @@ export class QKView extends HTMLElement implements ViewBacking {
         this.style.opacity = alpha.toString();
     }
 
+    // Filters are GPU accelerated so slightly faster. However, each one renders differently and has a unique style.
+    // Filter shadows seem to have some subtle rendering artifacts.
+    private _useFilterShadow: boolean = true;
+
     private _qk_shadow?: Shadow;
     public get qk_shadow(): Shadow | undefined { return this._qk_shadow; }
     public set qk_shadow(shadow: Shadow | undefined) {
         this._qk_shadow = shadow;
-        if (shadow) {
-            this.style.boxShadow =
-                shadow.offset.x.toCSS() + " " +
-                shadow.offset.y.toCSS() + " " +
-                shadow.blurRadius.toCSS() + " " +
-                colorToCSS(shadow.color);
-        } else {
-            this.style.boxShadow = "none";
+
+        if (this._useFilterShadow) { // Use filter shadow
+            if (shadow) {
+                this.style.filter =
+                    "drop-shadow(" +
+                        shadow.offset.x.toCSS() + " " +
+                        shadow.offset.y.toCSS() + " " +
+                        shadow.blurRadius.toCSS() + " " +
+                        colorToCSS(shadow.color) +
+                    ")";
+            } else {
+                this.style.filter = null;
+            }
+        } else { // Use box shadow
+            if (shadow) {
+                this.style.boxShadow =
+                    shadow.offset.x.toCSS() + " " +
+                    shadow.offset.y.toCSS() + " " +
+                    shadow.blurRadius.toCSS() + " " +
+                    colorToCSS(shadow.color);
+            } else {
+                this.style.boxShadow = null;
+            }
         }
     }
 
