@@ -94,7 +94,6 @@ export class QKView extends HTMLElement implements ViewBacking {
         this.oncontextmenu = event => event.preventDefault();
 
         // Handle pointer events (includes mice, touches, styluses) // See https://jsfiddle.net/jnL0xsa3/5/
-        this._qk_isDragging = false;
         this.addEventListener("pointerenter", e => this._qk_handlePointerEvent(e));
         this.addEventListener("pointerout", e => this._qk_handlePointerEvent(e));
 
@@ -125,7 +124,6 @@ export class QKView extends HTMLElement implements ViewBacking {
     private _qk_rect: Rect = Rect.zero;
     get qk_rect(): Rect { return this._qk_rect; }
     set qk_rect(rect: Rect) {
-        // console.log("Set qkrect", this);
         // Save the Rect
         this._qk_rect = rect;
 
@@ -328,6 +326,10 @@ export class QKView extends HTMLElement implements ViewBacking {
     private _qk_pointerMove(event: PointerEvent) {
         // Handle event
         this._qk_handlePointerEvent(event);
+
+        if (this.qk_view && this.qk_view.constructor.name === "DraggableView") {
+            console.log("Moved");
+        }
     }
 
     private _qk_pointerUp(event: PointerEvent) {
@@ -407,8 +409,10 @@ export class QKView extends HTMLElement implements ViewBacking {
             type = this._qk_previousInteractionType;
         }
 
-        // Save the previous interaction type for the next event.
-        this._qk_previousInteractionType = type;
+        // Save the previous interaction type for the next event (if not hovering).
+        if (type !== InteractionType.Hover) {
+            this._qk_previousInteractionType = type;
+        }
 
         // Don't send events if currently dragging, will send pointerout if needed when mouse up
         if (this._qk_isDragging && (event.type === "pointerenter" || event.type === "pointerout")) {
