@@ -183,6 +183,16 @@ export class QKView extends HTMLElement implements ViewBacking {
     /* Style */
     public qk_setBackgroundColor(color: Color) { this.style.backgroundColor = colorToCSS(color); }
 
+    public qk_setBackgroundBlur(blur: number) {
+        if (blur === 0) {
+            // Remove the blur
+            (this.style as any).backdropFilter = null;
+        } else {
+            // Add the backdrop filter
+            (this.style as any).backdropFilter = `blur(${blur.toCSS()})`;
+        }
+    }
+
     public qk_setAlpha(alpha: number) { this.style.opacity = alpha.toString(); }
 
     // Filters are GPU accelerated so slightly faster. However, each one renders differently and has a unique style.
