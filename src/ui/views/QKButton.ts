@@ -27,6 +27,12 @@ export class QKButton extends QKView implements ButtonBacking {
         this.restyleButton();
     }
 
+    public _qk_layout() {
+        super._qk_layout();
+
+        this.titleLabel.rect = this.qk_view.rect.bounds;
+    }
+
     public qk_setTitle(title: string) { this.titleLabel.text = title; }
 
     public qk_setIsEnabled(enabled: boolean) { this.restyleButton(); }
@@ -49,12 +55,6 @@ export class QKButton extends QKView implements ButtonBacking {
 
         // Style the view
         style.styleView(this.qk_view, this.titleLabel);
-    }
-
-    public _qk_layout() {
-        super._qk_layout();
-
-        this.titleLabel.rect = this.qk_view.rect.bounds;
     }
 }
 

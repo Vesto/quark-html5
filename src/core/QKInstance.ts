@@ -1,6 +1,6 @@
 /// <reference path="./vm2.d.ts"/>
 
-import { View, ModuleDelegate, ModuleDelegateConstructor, Window, ModuleBacking } from "quark";
+import { View, ModuleDelegate, ModuleDelegateConstructor, Window, ModuleBacking, Image, ImageDataType } from "quark";
 
 import { QKModule } from "./QKModule";
 import { QKLogger } from "./QKLogger";
@@ -15,6 +15,7 @@ import fs = require("fs");
 import { createLabelBacking } from "../ui/views/QKLabel";
 import { createButtonBacking } from "../ui/views/QKButton";
 import { QKFont } from "../types/QKFont";
+import { createImageViewBacking } from "../ui/views/QKImageView";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -69,6 +70,17 @@ export class QKInstance implements ModuleBacking {
 
     // Assigns the backing to components of the Quark library
     private assignBackings(): void {
+        // Set some random image thing
+        this.context.getAnImage = (): Image => {
+            // let start = Date.now();
+            // console.log("Started reading");
+            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/jimp-master/test/dice.png");
+            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/sec6_2f7_big.jpg");
+            let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/neelum_iko_2005282_lrg.jpg");
+            // console.log("Finished reading", (Date.now() - start) / 1000);
+            return new this.quarkLibrary.Image(buffer, ImageDataType.JPEG);
+        };
+
         // Module
         this.quarkLibrary.Module.shared.backing = this;
 
@@ -81,6 +93,7 @@ export class QKInstance implements ModuleBacking {
         // UI
         this.quarkLibrary.View.createBacking = createViewBacking;
         this.quarkLibrary.Button.createBacking = createButtonBacking;
+        this.quarkLibrary.ImageView.createBacking = createImageViewBacking;
         this.quarkLibrary.Label.createBacking = createLabelBacking;
 
         // Utils
