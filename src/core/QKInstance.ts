@@ -1,6 +1,6 @@
 /// <reference path="./vm2.d.ts"/>
 
-import { View, ModuleDelegate, ModuleDelegateConstructor, Window, ModuleBacking, Image, ImageDataType } from "quark";
+import { View, ModuleDelegate, ModuleDelegateConstructor, Window, ModuleBacking, Image, Size } from "quark";
 
 import { QKModule } from "./QKModule";
 import { QKLogger } from "./QKLogger";
@@ -71,14 +71,14 @@ export class QKInstance implements ModuleBacking {
     // Assigns the backing to components of the Quark library
     private assignBackings(): void {
         // Set some random image thing
-        this.context.getAnImage = (): Image => {
+        this.context.getAnImage = (): Image => { // TODO: Start loading from resources
             // let start = Date.now();
             // console.log("Started reading");
-            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/jimp-master/test/dice.png");
-            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/sec6_2f7_big.jpg");
-            let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/neelum_iko_2005282_lrg.jpg");
+            let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/jimp-master/test/dice.png"); // 800x600
+            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/sec6_2f7_big.jpg"); // 14400x7200
+            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/neelum_iko_2005282_lrg.jpg");
             // console.log("Finished reading", (Date.now() - start) / 1000);
-            return new this.quarkLibrary.Image(buffer, ImageDataType.JPEG);
+            return new this.quarkLibrary.Image(new Uint8ClampedArray(buffer), new Size(800, 600));
         };
 
         // Module

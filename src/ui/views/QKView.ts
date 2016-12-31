@@ -195,7 +195,9 @@ export class QKView extends HTMLElement implements ViewBacking {
                     "drop-shadow(" +
                         shadow.offset.x.toCSS() + " " +
                         shadow.offset.y.toCSS() + " " +
-                        shadow.blurRadius.toCSS() + " " +
+                        // Drop shadow 2x too large, so have to divide it by 2.
+                        // See https://bugs.chromium.org/p/chromium/issues/detail?id=677689
+                        (shadow.blurRadius / 2).toCSS() + " " +
                         colorToCSS(shadow.color) +
                     ")";
             } else {

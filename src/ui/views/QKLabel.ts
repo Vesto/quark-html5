@@ -9,6 +9,9 @@ export class QKLabel extends QKView implements LabelBacking {
 
         // Use a flexbox so it can align the text properly
         this.style.display = "flex";
+
+        // Respect \n as line breaks
+        this.style.whiteSpace = "pre-wrap";
     }
 
     public qk_setText(text: string) { this.textContent = text; }
