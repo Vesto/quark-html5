@@ -1,4 +1,4 @@
-/// <reference path="../utils/font-manager.d.ts" />
+/// <reference path="../utils/typings/font-manager.d.ts" />
 
 import { findFontsSync } from "font-manager";
 import { FontBacking, FontDescriptor } from "quark";

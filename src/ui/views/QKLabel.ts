@@ -2,7 +2,7 @@ import { Label, LabelBacking, Font, Color, LineBreakMode, TextAlignmentMode, Tex
 import { colorToCSS, QKView } from "./QKView";
 
 export class QKLabel extends QKView implements LabelBacking {
-    private get qk_label(): Label { return this.qk_view as Label; }
+    protected get qk_label(): Label { return this.qk_view as Label; }
 
     public constructor() {
         super();

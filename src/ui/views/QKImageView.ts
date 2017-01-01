@@ -1,8 +1,10 @@
-import { ImageViewBacking, Image, ImageScalingMode, Size, Point } from "quark";
+import { ImageViewBacking, Image, ImageScalingMode, ImageView, Point } from "quark";
 import { QKView } from "./QKView";
 import { StringView } from "stringview.js";
 
 export class QKImageView extends QKView implements ImageViewBacking {
+    protected get qk_imageView(): ImageView { return this.qk_view as ImageView; }
+
     public constructor() {
         super();
 
