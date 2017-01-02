@@ -33,13 +33,13 @@ export class QKButton extends QKView implements ButtonBacking {
         this.titleLabel.rect = this.qk_view.rect.bounds;
     }
 
-    public qk_setTitle(title: string) { this.titleLabel.text = title; }
+    public qk_setTitle(title: string): void { this.titleLabel.text = title; }
 
-    public qk_setIsEnabled(enabled: boolean) { this.restyleButton(); }
+    public qk_setIsEnabled(enabled: boolean): void { this.restyleButton(); }
 
-    public qk_setIsEmphasized(emphasized: boolean) { this.restyleButton(); }
+    public qk_setIsEmphasized(emphasized: boolean): void { this.restyleButton(); }
 
-    private restyleButton() {
+    protected restyleButton(): void {
         if (!this.qk_view) { return; }
 
         // Get the appropriate style

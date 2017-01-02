@@ -176,7 +176,15 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     /* Visibility */
-    public qk_setIsHidden(hidden: boolean) { this.hidden = hidden; }
+    public qk_setIsHidden(hidden: boolean) {
+        // Change hidden
+        this.hidden = hidden;
+
+        // Reset the `rect` if showing since `hidden` removes the layout
+        if (!hidden) {
+            this.qk_setRect(this.qk_view.rect);
+        }
+    }
 
     public qk_setClipSubviews(clip: boolean) { this.style.overflow = clip ? "hidden" : "visible"; }
 
@@ -239,11 +247,13 @@ export class QKView extends HTMLElement implements ViewBacking {
 
     /* Layout Handling */
     protected _qk_resize() {
-        // Save new _qk_rect
-        this.qk_view.rect = new this.qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
+        if (!this.hidden) { // Don't listen to resize events if hidden, since offset will be 0
+            // Save new _qk_rect
+            this.qk_view.rect = new this.qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
 
-        // Trigger a layout
-        this._qk_layout();
+            // Trigger a layout
+            this._qk_layout();
+        }
     }
 
     protected _qk_layout() {

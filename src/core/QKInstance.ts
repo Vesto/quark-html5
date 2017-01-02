@@ -16,6 +16,7 @@ import { createButtonBacking } from "../ui/views/QKButton";
 import { QKFont } from "../types/QKFont";
 import { createImageViewBacking } from "../ui/views/QKImageView";
 import { createSegmentedControlBacking } from "../ui/views/QKSegmentedControl";
+import { QKRootView } from "../ui/views/QKRootView";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -100,7 +101,7 @@ export class QKInstance implements ModuleBacking {
     }
 
     /* Methods */
-    public start(qkView: QKView) {
+    public start(qkView: QKRootView) {
         // Make sure not running
         if (this.running) { return; }
 

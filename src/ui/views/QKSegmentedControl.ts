@@ -1,11 +1,13 @@
 import { SegmentedControl, SegmentedControlBacking, Button, Appearance, SegmentItem, View } from "quark";
 import { QKView } from "./QKView";
+import { QKButton } from "./QKButton";
 
 export class QKSegmentedControl extends QKView implements SegmentedControlBacking {
     protected get qk_segmentedControl(): SegmentedControl { return this.qk_view as SegmentedControl; }
 
     private totalSegmentWidth: number = 0; // All SegmentItem.width added up
     private segmentButtons: Button[] = [];
+    private separators: View[] = [];
 
     public constructor() {
         super();
@@ -17,20 +19,19 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
         // Style this view
         appearance.normalControl.styleView(this.qk_view);
 
-        // Set the style of each segment and restyle them all
-        for (let segment of this.segmentButtons) {
-            segment.appearance = appearance;
-        }
+        // Restyle all the segments
         this.restyleSegments();
     }
 
     protected _qk_layout() {
         super._qk_layout();
 
+        // Layout all the segments and separators
         let xShift = 0;
         for (let i = 0; i < this.segmentButtons.length; i++) {
             let segment = this.segmentButtons[i];
 
+            /* Segments */
             // Resize the view to the appropriate percentage
             let segmentWidth = this.qk_view.rect.width * this.qk_segmentedControl.segments[i].width / this.totalSegmentWidth;
             segment.rect = new this.qk_lib.Rect(
@@ -40,19 +41,23 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
 
             // Add to the x shift for the next element
             xShift += segmentWidth;
-        }
-    }
 
-    public get qk_subviews(): View[] {
-        // Filter out the buttons from the subviews
-        return super.qk_subviews.filter(view => {
-            if (view instanceof this.qk_lib.Button) {
-                // `as any` to silence error where it can't tell that `this.qk_lib.Button` is a Button
-                return this.segmentButtons.indexOf(view as any) === -1;
-            } else {
-                return true;
+            /* Separators */
+            if (i < this.segmentButtons.length - 1) { // Don't modify the last separator, since it doesn't exist
+                let separator = this.separators[i];
+
+                // Position the view
+                let padding = 8;
+                let width = 1;
+                separator.rect = new this.qk_lib.Rect(
+                    xShift - width / 2, padding,
+                    width, this.qk_view.rect.height - padding * 2
+                );
+
+                // Round the corners
+                separator.cornerRadius = width / 2;
             }
-        });
+        }
     }
 
     public qk_setIsEnabled(enabled: boolean): void {
@@ -63,13 +68,12 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
         // Clear previous segments
         this.clearSegments();
 
-        // Recreate the buttons
+        /* Segments */
         for (let i = 0; i < segments.length; i++) {
             let segment = segments[i];
-
             // Create the button
-            let button = new this.qk_lib.Button() as Button;
-            button.onButtonUp = button => {
+            let button = new this.qk_lib.Button(new QKSegmentView()) as Button;
+            button.onButtonUp = () => {
                 this.qk_segmentedControl.selectedIndex = i;
             };
 
@@ -92,6 +96,22 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
             // Add it
             this.segmentButtons.push(button);
         }
+
+        /* Separators */
+        // Do this loop separately so the separators appear on top of the segments
+        for (let i = 0; i < segments.length - 1; i++) {
+            // Create the separator
+            let separator = new this.qk_lib.View();
+
+            // Add to view
+            this.qk_view.addSubview(separator);
+
+            // Add it
+            this.separators.push(separator);
+        }
+
+        // Layout the views
+        this._qk_layout();
     }
 
     public qk_setSelectedIndex(index: number | any): void {
@@ -108,9 +128,15 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
             segment.onButtonUp = undefined;
         }
 
+        for (let separator of this.separators) {
+            // Remove from the superview
+            separator.removeFromSuperview();
+        }
+
         // Empty the array
         this.totalSegmentWidth = 0;
         this.segmentButtons = [];
+        this.separators = [];
     }
 
     private restyleSegments(): void {
@@ -126,8 +152,33 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
             // Remove corner radius
             segment.cornerRadius = 0;
         }
+
+        for (let i = 0; i < this.segmentButtons.length - 1; i++) {
+            let separator = this.separators[i];
+
+            // Match the background color; use `this.qk_view.appearance` instead of `separator.appearance` because
+            // the separator's appearance has not been set yet at this stage.
+            separator.backgroundColor = this.qk_view.appearance.backgroundColor;
+
+            // Hide if on border of selected index
+            let selectedIndex = this.qk_segmentedControl.selectedIndex;
+            separator.isHidden = i === selectedIndex || i + 1 === selectedIndex;
+        }
     }
 }
+
+// Override QKButton behavior to act like a segment
+class QKSegmentView extends QKButton {
+    protected restyleButton(): void {
+        super.restyleButton();
+
+        // Don't add a corner radius
+        this.qk_view.cornerRadius = 0;
+    }
+}
+
+// Register the segment view
+window.customElements.define("qk-segment-view", QKSegmentView);
 
 // Register the element with the window
 window.customElements.define("qk-segmented-control", QKSegmentedControl);
