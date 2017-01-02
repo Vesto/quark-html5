@@ -17,6 +17,7 @@ import { QKFont } from "../types/QKFont";
 import { createImageViewBacking } from "../ui/views/QKImageView";
 import { createSegmentedControlBacking } from "../ui/views/QKSegmentedControl";
 import { QKRootView } from "../ui/views/QKRootView";
+import { createScrollViewBacking } from "../ui/views/QKScrollView";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -89,11 +90,12 @@ export class QKInstance implements ModuleBacking {
         this.quarkLibrary.Font.backing = QKFont;
 
         // UI
-        this.quarkLibrary.View.createBacking = createViewBacking;
         this.quarkLibrary.Button.createBacking = createButtonBacking;
         this.quarkLibrary.ImageView.createBacking = createImageViewBacking;
-        this.quarkLibrary.SegmentedControl.createBacking = createSegmentedControlBacking;
         this.quarkLibrary.Label.createBacking = createLabelBacking;
+        this.quarkLibrary.ScrollView.createBacking = createScrollViewBacking;
+        this.quarkLibrary.SegmentedControl.createBacking = createSegmentedControlBacking;
+        this.quarkLibrary.View.createBacking = createViewBacking;
 
         // Utils
         this.quarkLibrary.AnimationLoop.backing = QKAnimationLoop;
