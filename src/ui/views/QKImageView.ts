@@ -35,6 +35,9 @@ export class QKImageView extends QKView implements ImageViewBacking {
         let size: string;
         if (typeof mode === "string") {
             switch (mode) {
+                case "none":
+                    size = "auto auto";
+                    break;
                 case "fill":
                     size = "100% 100%";
                     break;
