@@ -17,7 +17,8 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
         super.qk_appearanceChanged(appearance);
 
         // Style this view
-        appearance.normalControl.styleView(this.qk_view);
+        this.qk_view.cornerRadius = appearance.cornerRadius;
+        this.qk_view.backgroundColor = appearance.secondaryColor;
 
         // Restyle all the segments
         this.restyleSegments();
@@ -142,7 +143,6 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
     private restyleSegments(): void {
         // All the buttons already have the appropriate style since they are a subview of this view, and when the
         // appearance is changed for this view, it was set for them.
-
         for (let i = 0; i < this.segmentButtons.length; i++) {
             let segment = this.segmentButtons[i];
 
@@ -153,7 +153,7 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
             segment.cornerRadius = 0;
         }
 
-        for (let i = 0; i < this.segmentButtons.length - 1; i++) {
+        for (let i = 0; i < this.separators.length; i++) {
             let separator = this.separators[i];
 
             // Match the background color; use `this.qk_view.appearance` instead of `separator.appearance` because

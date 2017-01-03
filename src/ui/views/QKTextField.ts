@@ -1,4 +1,4 @@
-import { TextField, TextFieldBacking, Appearance, AppearanceStyle } from "quark";
+import { TextField, TextFieldBacking, Appearance, Color } from "quark";
 import { QKLabel } from "./QKLabel";
 
 declare global {
@@ -53,21 +53,19 @@ export class QKTextField extends QKLabel implements TextFieldBacking {
     }
 
     protected restyleField(): void {
-        if (!this.qk_view) { return; }
-
-        // Get the appropriate style
-        let appearance = this.qk_view.appearance;
-        let style: AppearanceStyle;
-        if (!this.qk_textField.isEnabled) {
-            style = appearance.alternateDisabledControl;
-        } else if (this.qk_textField.isFocused) {
-            style = appearance.alternateActiveControl;
-        } else {
-            style = appearance.alternateNormalControl;
-        }
-
         // Style the view
-        style.styleView(this.qk_view);
+        let appearance = this.qk_textField.appearance;
+        this.qk_view.cornerRadius = appearance.cornerRadius;
+        if (!this.qk_textField.isEnabled) { // Disabled
+            this.qk_textField.backgroundColor = appearance.tertiaryColor;
+            this.qk_textField.textColor = appearance.primaryColor.withAlpha(0.5);
+        } else if (this.qk_textField.isFocused) { // Focused
+            this.qk_textField.backgroundColor = appearance.primaryColor;
+            this.qk_textField.textColor = appearance.primaryColor.isDark ? Color.white : Color.black;
+        } else { // Normal
+            this.qk_textField.backgroundColor = appearance.tertiaryColor;
+            this.qk_textField.textColor = appearance.primaryColor;
+        }
     }
 }
 
