@@ -20,7 +20,7 @@ export class QKScrollView extends QKView implements ScrollViewBacking {
         super.qk_init();
 
         // Create the content view
-        this.contentView = new this.qk_lib.View(); // TODO: Make the superview be this, instead of content
+        this.contentView = new this.qk_lib.View(); // TODO: Make it so when children query the superview, it gives the `QKScrollView`
         this.contentView.backgroundColor = new Color(0, 0, 0, 0);
         this.style.overflow = null; // Don't have a default overflow behavior
         super.qk_addSubview(this.contentView, 0); // Call on `super` since this overrides `qk_addSubview`

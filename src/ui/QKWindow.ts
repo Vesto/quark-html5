@@ -1,11 +1,11 @@
-import { View, RootView, WindowBacking } from "quark";
+import { RootView, WindowBacking } from "quark";
 
 export class QKWindow implements WindowBacking {
     public rootView: RootView;
 
-    public get qk_rootView(): View { return this.rootView; }
+    public get qk_rootView(): RootView { return this.rootView; }
 
-    public constructor(view: View) {
+    public constructor(view: RootView) {
         this.rootView = view;
     }
 }

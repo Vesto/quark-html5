@@ -18,6 +18,7 @@ import { createImageViewBacking } from "../ui/views/QKImageView";
 import { createSegmentedControlBacking } from "../ui/views/QKSegmentedControl";
 import { QKRootView } from "../ui/views/QKRootView";
 import { createScrollViewBacking } from "../ui/views/QKScrollView";
+import { createTextFieldBacking } from "../ui/views/QKTextField";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -95,6 +96,7 @@ export class QKInstance implements ModuleBacking {
         this.quarkLibrary.Label.createBacking = createLabelBacking;
         this.quarkLibrary.ScrollView.createBacking = createScrollViewBacking;
         this.quarkLibrary.SegmentedControl.createBacking = createSegmentedControlBacking;
+        this.quarkLibrary.TextField.createBacking = createTextFieldBacking;
         this.quarkLibrary.View.createBacking = createViewBacking;
 
         // Utils

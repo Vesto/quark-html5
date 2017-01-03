@@ -1,4 +1,4 @@
-import { View, ViewBacking, Rect, Color, Shadow, InteractionEvent, KeyEvent, EventPhase, KeyPhase, ScrollEvent, Point, InteractionType, Appearance } from "quark";
+import { View, ViewBacking, Rect, Color, Shadow, EventPhase, KeyPhase, Point, InteractionType, Appearance } from "quark";
 import { QKInstance } from "../../core/QKInstance";
 
 // Declare the ResizeObserver for getting resize events (part of experimental Chrome)
@@ -86,12 +86,19 @@ export class QKView extends HTMLElement implements ViewBacking {
         // GPU accelerate the view
         this.style.transform = "translate3d(0, 0, 0)";
 
+        // Don't outline if focused
+        this.style.outline = "none";
+
         /* Event handling */
         // Resize event
         new ResizeObserver(() => this._qk_resize()).observe(this);
 
         // Prevent right click on this element
         this.oncontextmenu = event => event.preventDefault();
+
+        // Focus event
+        this.addEventListener("focus", e => this._qk_handleFocusEvent(e));
+        this.addEventListener("blur", e => this._qk_handleFocusEvent(e));
 
         // Handle pointer events (includes mice, touches, styluses) // See https://jsfiddle.net/jnL0xsa3/5/
         this.addEventListener("pointerenter", e => this._qk_handlePointerEvent(e));
@@ -176,6 +183,22 @@ export class QKView extends HTMLElement implements ViewBacking {
     }
 
     /* Visibility */
+    // Returns if this or any parent is hidden
+    protected get _isVisible(): boolean {
+        // Loop through superviews checking for hidden
+        let v: View | undefined = this.qk_view;
+        while (v) {
+            if (v.isHidden) {
+                return false;
+            } else {
+                v = v.superview;
+            }
+        }
+
+        // Is visible
+        return true;
+    }
+
     public qk_setIsHidden(hidden: boolean) {
         // Change hidden
         this.hidden = hidden;
@@ -183,6 +206,11 @@ export class QKView extends HTMLElement implements ViewBacking {
         // Reset the `rect` if showing since `hidden` removes the layout
         if (!hidden) {
             this.qk_setRect(this.qk_view.rect);
+
+            // Reset the rect for all children too
+            for (let subview of this.qk_subviews) {
+                subview.backing.qk_setIsHidden(subview.isHidden);
+            }
         }
     }
 
@@ -247,7 +275,7 @@ export class QKView extends HTMLElement implements ViewBacking {
 
     /* Layout Handling */
     protected _qk_resize() {
-        if (!this.hidden) { // Don't listen to resize events if hidden, since offset will be 0
+        if (this._isVisible) { // Don't listen to resize events if hidden, since offset will be 0
             // Save new _qk_rect
             this.qk_view.rect = new this.qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
 
@@ -261,18 +289,38 @@ export class QKView extends HTMLElement implements ViewBacking {
         this.qk_view.layout();
     }
 
-    /* Input Event Handling */
+    /* Focusing */
+    public qk_setFocusable(focusable: boolean): void {
+        if (focusable) {
+            // Setting `tabIndex` to 0 means it's focusable based on native ordering
+            // See https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex
+            this.tabIndex = 0;
+        } else {
+            // Removes the attribute
+            this.removeAttribute("tabindex");
+        }
+    }
+
+    public qk_setFocused(focused: boolean): void {
+        if (focused) {
+            this.focus();
+        } else {
+            this.blur();
+        }
+    }
+
+    /* Event Handling */
     // Events (stored here so they can be cancelled or reused)
-    private _qk_pointerMoveEvent: (e: PointerEvent) => void;
-    private _qk_pointerUpEvent: (e: PointerEvent) => void;
+    protected _qk_pointerMoveEvent: (e: PointerEvent) => void;
+    protected _qk_pointerUpEvent: (e: PointerEvent) => void;
 
     // Use this so when `pointerup` is called, we can determine which button was let up
-    private _qk_previousInteractionType: InteractionType;
+    protected _qk_previousInteractionType: InteractionType;
 
     // If the pointer is dragging // TODO: Find out how to individually identify pointer events (pointer.id not working)
-    private _qk_isDragging: boolean;
+    protected _qk_isDragging: boolean;
 
-    private _qk_setDragging(dragging: boolean) {
+    protected _qk_setDragging(dragging: boolean) {
         // Make sure there's a change
         if (dragging === this._qk_isDragging) { return; }
 
@@ -299,7 +347,7 @@ export class QKView extends HTMLElement implements ViewBacking {
         }
     }
 
-    private _qk_pointerDown(event: PointerEvent) {
+    protected _qk_pointerDown(event: PointerEvent) {
         // Save dragging
         this._qk_setDragging(true);
 
@@ -307,12 +355,12 @@ export class QKView extends HTMLElement implements ViewBacking {
         this._qk_handlePointerEvent(event);
     }
 
-    private _qk_pointerMove(event: PointerEvent) {
+    protected _qk_pointerMove(event: PointerEvent) {
         // Handle event
         this._qk_handlePointerEvent(event);
     }
 
-    private _qk_pointerUp(event: PointerEvent) {
+    protected _qk_pointerUp(event: PointerEvent) {
         // Make sure dragging with right pointer
         if (!this._qk_isDragging) { return; }
 
@@ -329,7 +377,22 @@ export class QKView extends HTMLElement implements ViewBacking {
         }
     }
 
-    private _qk_handlePointerEvent(event: PointerEvent) {
+    protected _qk_handleFocusEvent(event: FocusEvent) {
+        // Determine if focused
+        let focused = event.type === "focus";
+
+        let shouldCapture = this.qk_view.focusEvent(
+            new this.qk_lib.FocusEvent(
+                event.timeStamp,
+                event,
+                focused
+            )
+        );
+
+        if (shouldCapture) { event.preventDefault(); event.stopPropagation(); }
+    }
+
+    protected _qk_handlePointerEvent(event: PointerEvent) {
         // Determine the phase
         let phase: EventPhase;
         switch (event.type) {
@@ -404,7 +467,7 @@ export class QKView extends HTMLElement implements ViewBacking {
         }
 
         let shouldCapture = this.qk_view.interactionEvent(
-            new InteractionEvent(
+            new this.qk_lib.InteractionEvent(
                 event.timeStamp,
                 event,
                 type,
@@ -419,11 +482,11 @@ export class QKView extends HTMLElement implements ViewBacking {
         if (shouldCapture) { event.preventDefault(); event.stopPropagation(); }
     }
 
-    private _qk_handleKeyEvent(event: KeyboardEvent) {
+    protected _qk_handleKeyEvent(event: KeyboardEvent) {
         let isDown = event.type !== "keyup"; // Look at the event type to determine if it's down
 
         let shouldCapture = this.qk_view.keyEvent(
-            new KeyEvent(
+            new this.qk_lib.KeyEvent(
                 event.timeStamp,
                 event,
                 isDown ? (event.repeat ? KeyPhase.Repeat : KeyPhase.Down) : KeyPhase.Up,
@@ -435,9 +498,9 @@ export class QKView extends HTMLElement implements ViewBacking {
         if (shouldCapture) { event.preventDefault(); event.stopPropagation(); }
     }
 
-    private _qk_handleWheelEvent(event: WheelEvent) {
+    protected _qk_handleWheelEvent(event: WheelEvent) {
         let shouldCapture = this.qk_view.scrollEvent(
-            new ScrollEvent(
+            new this.qk_lib.ScrollEvent(
                 event.timeStamp,
                 event,
                 event.convertToPoint(this), // TODO: location in root view
