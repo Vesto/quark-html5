@@ -49,6 +49,7 @@ export class QKTextField extends QKLabel implements TextFieldBacking {
     }
 
     public qk_setIsSecure(secure: boolean): void {
+        // Show dots for everything
         this.style.webkitTextSecurity = secure ? "disc" : "none";
     }
 

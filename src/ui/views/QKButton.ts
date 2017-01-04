@@ -27,8 +27,8 @@ export class QKButton extends QKView implements ButtonBacking {
         this.restyleButton();
     }
 
-    public _qk_layout() {
-        super._qk_layout();
+    public qk_layout() {
+        super.qk_layout();
 
         this.titleLabel.rect = this.qk_view.rect.bounds;
     }

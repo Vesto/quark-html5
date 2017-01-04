@@ -136,6 +136,10 @@ export class QKView extends HTMLElement implements ViewBacking {
         this.style.height = rect.height.toCSS();
     }
 
+    public qk_layout(): void {
+        // Do nothing
+    }
+
     /* View Hierarchy */
     public get qk_subviews(): View[] {
         return Array.prototype.slice.call(this.children)
@@ -169,7 +173,7 @@ export class QKView extends HTMLElement implements ViewBacking {
         view.movedToSuperview(this.qk_view);
 
         // Trigger a layout on the view
-        (view.backing as QKView)._qk_layout();
+        view.layout();
     }
 
     public qk_removeFromSuperview(): void {
@@ -275,18 +279,11 @@ export class QKView extends HTMLElement implements ViewBacking {
 
     /* Layout Handling */
     protected _qk_resize() {
-        if (this._isVisible) { // Don't listen to resize events if hidden, since offset will be 0
-            // Save new _qk_rect
+        // Don't listen to resize events if hidden, since offset will be 0
+        if (this._isVisible) {
+            // Save new rect, which therefore triggers a layout
             this.qk_view.rect = new this.qk_lib.Rect(this.offsetLeft, this.offsetTop, this.offsetWidth, this.offsetHeight);
-
-            // Trigger a layout
-            this._qk_layout();
         }
-    }
-
-    protected _qk_layout() {
-        // Layouts the view.
-        this.qk_view.layout();
     }
 
     /* Focusing */

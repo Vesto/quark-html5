@@ -24,8 +24,8 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
         this.restyleSegments();
     }
 
-    protected _qk_layout() {
-        super._qk_layout();
+    public qk_layout() {
+        super.qk_layout();
 
         // Layout all the segments and separators
         let xShift = 0;
@@ -112,7 +112,7 @@ export class QKSegmentedControl extends QKView implements SegmentedControlBackin
         }
 
         // Layout the views
-        this._qk_layout();
+        this.qk_layout();
     }
 
     public qk_setSelectedIndex(index: number | any): void {
