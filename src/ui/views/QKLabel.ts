@@ -1,4 +1,4 @@
-import { Label, LabelBacking, Font, Color, LineBreakMode, TextAlignmentMode, TextVerticalAlignmentMode } from "quark";
+import { Label, LabelBacking, Font, Color, LineBreakMode, TextAlignmentMode, TextVerticalAlignmentMode, Size } from "quark";
 import { colorToCSS, QKView } from "./QKView";
 
 export class QKLabel extends QKView implements LabelBacking {
@@ -103,6 +103,31 @@ export class QKLabel extends QKView implements LabelBacking {
 
         // Set the alignment
         this.style.alignItems = cssMode; // Uses flexbox to align at top, bottom, or middle
+    }
+
+    public get qk_textSize(): Size {
+        // Save the old styles
+        let oldDisplay = this.style.display;
+        let oldHeight = this.style.height;
+        let oldWidth = this.style.width;
+        let oldMaxWidth = this.style.maxWidth;
+
+        // Set new styles for measuring
+        this.style.display = "inline-block";
+        this.style.height = "auto";
+        this.style.width = "auto";
+        this.style.maxWidth = oldWidth;
+
+        // Get the new size
+        let size: Size = new this.qk_lib.Size(this.offsetWidth, this.offsetHeight);
+
+        // Set the old styles again
+        this.style.display = oldDisplay;
+        this.style.height = oldHeight;
+        this.style.width = oldWidth;
+        this.style.maxWidth = oldMaxWidth;
+
+        return size;
     }
 }
 
