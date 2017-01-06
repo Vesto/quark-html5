@@ -19,6 +19,7 @@ import { createSegmentedControlBacking } from "../ui/views/QKSegmentedControl";
 import { QKRootView } from "../ui/views/QKRootView";
 import { createScrollViewBacking } from "../ui/views/QKScrollView";
 import { createTextFieldBacking } from "../ui/views/QKTextField";
+import { createWebSocketBacking } from "../QKWebSocket";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
@@ -75,9 +76,7 @@ export class QKInstance implements ModuleBacking {
     private assignBackings(): void {
         // Set some random image thing
         this.context.getAnImage = (): Image => { // TODO: Start loading from resources
-            let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/jimp-master/test/dice.png"); // 800x600
-            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/sec6_2f7_big.jpg"); // 14400x7200
-            // let buffer = fs.readFileSync("/Users/NathanFlurry/Downloads/neelum_iko_2005282_lrg.jpg");
+            let buffer = fs.readFileSync("/Users/nathanflurry/Downloads/Vesto-Large.png");
             return new this.quarkLibrary.Image(new Uint8ClampedArray(buffer), ImageDataType.JPEG);
         };
 
@@ -86,6 +85,7 @@ export class QKInstance implements ModuleBacking {
 
         // Core
         this.quarkLibrary.Logger.backing = QKLogger;
+        this.quarkLibrary.WebSocket.createBacking = createWebSocketBacking;
 
         // Types
         this.quarkLibrary.Font.backing = QKFont;
