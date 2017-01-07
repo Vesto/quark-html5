@@ -19,7 +19,7 @@ import { createSegmentedControlBacking } from "../ui/views/QKSegmentedControl";
 import { QKRootView } from "../ui/views/QKRootView";
 import { createScrollViewBacking } from "../ui/views/QKScrollView";
 import { createTextFieldBacking } from "../ui/views/QKTextField";
-import { createWebSocketBacking } from "../QKWebSocket";
+import { createWebSocketBacking } from "./QKWebSocket";
 
 // Creates a Quark instance
 export class QKInstance implements ModuleBacking {
